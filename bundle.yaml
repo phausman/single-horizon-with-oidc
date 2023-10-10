@@ -1,0 +1,192 @@
+local_overlay_enabled: False
+
+variables:
+  openstack-origin: &openstack-origin cloud:jammy-zed
+
+series: jammy
+
+comment:
+  - 'machines section to decide order of deployment. database sooner = faster'
+  - 'virt-type=kvm is workaround while awaiting new release of python-libjuju'
+
+machines:
+  # Region A
+  '0':
+    # constraints: virt-type=kvm mem=3072M
+  '1':
+    # constraints: virt-type=kvm mem=3072M
+  '2':
+    # constraints: virt-type=kvm mem=3072M
+  '3':
+    # constraints: virt-type=kvm
+  '4':
+    # constraints: virt-type=kvm mem=3072M
+  '5':
+  '6':
+
+  # Region B
+  '7':
+  '8':
+  '9':
+  '10':
+  '11':
+
+applications:
+
+  #
+  # Region A
+  #
+
+  keystone-mysql-router-a:
+    charm: ch:mysql-router
+    channel: 8.0/edge
+  
+  openstack-dashboard-mysql-router-a:
+    charm: ch:mysql-router
+    channel: 8.0/edge
+
+  mysql-innodb-cluster-a:
+    charm: ch:mysql-innodb-cluster
+    num_units: 3
+    options:
+      source: *openstack-origin
+    to:
+      - '0'
+      - '1'
+      - '2'
+    channel: 8.0/edge
+
+  keystone:
+    charm: ch:keystone
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+    to:
+      - '3'
+    channel: zed/edge
+
+  keystone-openidc:
+    charm: ch:keystone-openidc
+    num_units: 0
+    channel: zed/stable
+
+  openstack-dashboard:
+    charm: ch:openstack-dashboard
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+      webroot: /
+      admin-password: "admin"
+    to:
+      - '4'
+    channel: zed/edge
+
+  rabbitmq-server-a:
+    charm: ch:rabbitmq-server
+    num_units: 1
+    # options:
+    #   source: *openstack-origin
+    to:
+      - '5'
+    channel: 3.9/edge
+
+  aodh-mysql-router-a:
+    charm: ch:mysql-router
+    channel: 8.0/edge
+
+  aodh-a:
+    charm: ch:aodh
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+      region: RegionOne
+    to:
+      - '6'
+    channel: zed/edge
+
+  #
+  # Region B
+  #
+
+  mysql-innodb-cluster-b:
+    charm: ch:mysql-innodb-cluster
+    num_units: 3
+    options:
+      source: *openstack-origin
+    to:
+      - '7'
+      - '8'
+      - '9'
+    channel: 8.0/edge
+
+  rabbitmq-server-b:
+    charm: ch:rabbitmq-server
+    num_units: 1
+    # options:
+    #   source: *openstack-origin
+    to:
+      - '10'
+    channel: 3.9/edge
+
+  aodh-mysql-router-b:
+    charm: ch:mysql-router
+    channel: 8.0/edge
+
+  aodh-b:
+    charm: ch:aodh
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+      region: RegionTwo
+    to:
+      - '11'
+    channel: zed/edge
+
+
+relations:
+
+  # Region A
+
+  - - 'keystone:shared-db'
+    - 'keystone-mysql-router-a:shared-db'
+  - - 'keystone-mysql-router-a:db-router'
+    - 'mysql-innodb-cluster-a:db-router'
+
+  - - 'openstack-dashboard:shared-db'
+    - 'openstack-dashboard-mysql-router-a:shared-db'
+  - - 'openstack-dashboard-mysql-router-a:db-router'
+    - 'mysql-innodb-cluster-a:db-router'
+
+  - - 'openstack-dashboard:identity-service'
+    - 'keystone:identity-service'
+
+  - - 'keystone-openidc:keystone-fid-service-provider'
+    - 'keystone:keystone-fid-service-provider'
+
+  - - 'keystone-openidc:websso-fid-service-provider'
+    - 'openstack-dashboard:websso-fid-service-provider'
+
+  - - 'aodh-a:shared-db'
+    - 'aodh-mysql-router-a:shared-db'
+  - - 'aodh-mysql-router-a:db-router'
+    - 'mysql-innodb-cluster-a:db-router'
+
+  - - 'aodh-a:amqp'
+    - 'rabbitmq-server-a:amqp'
+
+  - - 'aodh-a:identity-service'
+    - 'keystone:identity-service'
+  
+
+  # Region B
+
+  - - 'aodh-b:shared-db'
+    - 'aodh-mysql-router-b:shared-db'
+  - - 'aodh-mysql-router-b:db-router'
+    - 'mysql-innodb-cluster-b:db-router'
+
+  - - 'aodh-b:amqp'
+    - 'rabbitmq-server-b:amqp'
+
+  - - 'aodh-b:identity-service'
+    - 'keystone:identity-service'
