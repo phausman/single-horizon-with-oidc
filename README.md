@@ -41,7 +41,7 @@ bin/kc.sh start-dev \
 
 # Set up Keycloak
 
-Go to https://<keycloak-IP>:8443/admin and log in with admin:admin credentials.
+Go to `https://<keycloak-IP>:8443/admin` and log in with admin:admin credentials.
 
 ## Create a realm
 
@@ -64,7 +64,7 @@ Go to https://<keycloak-IP>:8443/admin and log in with admin:admin credentials.
 
 ## Log in to the Account Console
 
-1. Open the Keycloak Account Console, https://<keycloak-IP>:8443/realms/openstack/account
+1. Open the Keycloak Account Console, `https://<keycloak-IP>:8443/realms/openstack/account`
 2. Log in with `keycloak:keycloak` credentials.
 
 ## Set up OpenStack integration in Keycloak
@@ -89,7 +89,7 @@ Go to https://<keycloak-IP>:8443/admin and log in with admin:admin credentials.
     OIDCRedirectURI "http://10.139.101.253:5000/v3/auth/OS-FEDERATION/identity_providers/openid/protocols/openid/websso"
     OIDCRedirectURI "http://10.139.101.253:5000/v3/auth/OS-FEDERATION/websso/openid"
 
-   - Set Web origins to http://<horizon-IP>/horizon
+   - Set Web origins to `http://<horizon-IP>/horizon`
 
    - In "Capability config", enable "Client authentication". This will enable
    "Credentials" tab, when you will learn "Client secret" needed to set up 
@@ -177,7 +177,7 @@ openstack federation protocol create openid \
 ```
 
 Append the following lines to the /etc/keystone/keystone.conf 
-on the keystone/0 unit (replace <horizon-IP> with actual IP). Note that juju
+on the keystone/0 unit (replace `<horizon-IP>` with actual IP). Note that juju
 will overwrite .conf file, so you need to stop juju agent systemd service.
 
 ```
